@@ -35,6 +35,11 @@ def top_cv_volatilite_graph(df, top_n=5):
     return top_cv, top_vol
 
 
+###############################################"
+
+
+
+#''''''''''''''''''''''''''''''''''''''''''''''''''
 # --- Interface Streamlit ---
 st.title("📊 Analyse des Actions Rendement & Volatilité (Janv-Juin 2025)")
 
@@ -69,7 +74,7 @@ fig_vol = px.bar(
     title="Top 5 des actions les plus volatiles",
     #text=[f"{v:.2%}" for v in top_vol.values],
     color=top_vol.values,
-    color_continuous_scale='magma'
+    color_continuous_scale='viridis'
 )
 fig_vol.update_layout(yaxis=dict(autorange="reversed"))
 
@@ -101,4 +106,12 @@ with col1:
 
 with col3:
     st.plotly_chart(fig_rendement, use_container_width=True)
+    Titre = st.multiselect("Selectionné un titre ", df.columns)
+    donné = df[Titre]
+    #redement 
+    rendement = donné.pct_change().fillna(0)
+    #st.write(rendement)
+    #graphe redement 
+    fig = px.line(donné, title='Evolution rendement')
+    st.plotly_chart(fig)
 

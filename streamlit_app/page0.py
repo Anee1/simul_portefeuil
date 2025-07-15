@@ -1,16 +1,16 @@
-# Interface utilisateur avec Streamlit
+# Streamlit User Interface
 import streamlit as st
 
 st.set_page_config(
     layout="wide",
-    page_title="Portefeuille Optimal BRVM",
+    page_title="Optimal Portfolio on the BRVM",
     page_icon="💼"
 )
 
-# Conteneur pour aligner les éléments horizontalement
+# Horizontal alignment container
 col1, col2, col3 = st.columns([1, 4, 1])
 
-# Colonne gauche : Image
+# Left column: Image
 with col1:
     st.image(
         "https://media.licdn.com/dms/image/v2/D4E03AQF7cVN_iger2w/profile-displayphoto-shrink_800_800/B4EZdURvE.HsAc-/0/1749465625806?e=1755734400&v=beta&t=4FXq1wVFGgbqDEOVVw-MHUZt9wkZWEx0kndiMZQqMwo",
@@ -18,16 +18,16 @@ with col1:
         use_container_width=False,
     )
 
-# Colonne centrale : Titre
+# Center column: Title
 with col2:
     st.markdown(
         """
-        <h1 style='text-align: center; margin-bottom: 0;'>Construction d'un Portefeuille Optimal sur la BRVM</h1>
+        <h1 style='text-align: center; margin-bottom: 0;'>Building an Optimal Portfolio on the BRVM</h1>
         """,
         unsafe_allow_html=True,
     )
 
-# Colonne droite : Nom et lien LinkedIn
+# Right column: Name and LinkedIn
 with col3:
     st.markdown(
         """
@@ -43,80 +43,89 @@ with col3:
 st.write(" ")
 st.write(" ")
 
-# Section de présentation du projet
-st.title("Présentation du projet")
+# Project Introduction
+st.title("Project Overview")
 
 st.markdown(
     """
-    Ce projet vise à construire un **portefeuille optimal d'actions cotées sur la BRVM**, basé sur une approche quantitative
-    et des contraintes de performance et de diversification.
+    This project aims to build an **optimal portfolio of stocks listed on the BRVM**, using a quantitative approach
+    and subject to performance and diversification constraints.
 
-    L’objectif est de :
-    - Maximiser la diversification
-    - Garantir un rendement cible annuel
-    - Minimiser le risque (volatilité) du portefeuille
-    - Contrôler la corrélation entre les titres sélectionnés
-    - Respecter un poids maximal par actif
+    The main objectives are:
+    - Maximize diversification
+    - Ensure a target annual return
+    - Minimize portfolio risk (volatility)
+    - Reduce correlation between selected stocks
+    - Limit the individual weight of each asset
 
-    Nous utilisons les bibliothèques **Pandas, NumPy, Plotly** pour l'analyse de données, et **cvxpy** pour la modélisation et
-    la résolution du problème d'optimisation quadratique sous contraintes.
+    The project uses **Pandas, NumPy, Plotly** for data analysis and **cvxpy** to solve the constrained quadratic optimization problem.
     """
 )
 
 st.write(" ")
 st.write(" ")
 
-# Phase 1 - Collecte et Préparation
-st.markdown("## **Phase 1 : Collecte et Préparation des Données**")
+# Phase 1 - Data Collection & Preparation
+st.markdown("## **Phase 1: Data Collection and Preparation**")
 st.markdown(
     """
-    - Les données de cours sont collectées à partir des historiques des actions BRVM.
-    - Les colonnes avec trop de valeurs manquantes sont supprimées.
-    - Les données sont remplies (`forward fill`, `backward fill`) et converties en pourcentages de rendement mensuel.
-    - La période d’analyse porte sur **les données depuis juillet 2024 jusqu’à aujourd’hui**.
+    - Price data is extracted from historical quotes of BRVM-listed stocks.
+    - Columns with more than 70% missing values are removed.
+    - Missing data is imputed using forward and backward fill methods.
+    - Monthly returns are then calculated.
+    - The analysis period starts from **July 2024 to the present day**.
     """
 )
 
-# Phase 2 - Filtrage
-st.markdown("## **Phase 2 : Filtrage des Actifs**")
+# Phase 2 - Stock Analysis
+st.markdown("## **Phase 2: Stock Analysis**")
 st.markdown(
     """
-    - Seules les actions dont le **rendement cumulé** sur la période est supérieur à **10%** sont retenues.
-    - Ensuite, on calcule la **corrélation moyenne** de chaque actif avec les autres.
-    - Les actions dont la corrélation moyenne dépasse un seuil (ex. 0.35) sont exclues.
+    - Display of the most profitable stocks over the last 6 months.
+    - Identification of the most volatile stocks.
+    - Visualization of return trends, with the ability to select a specific stock.
     """
 )
 
-# Phase 3 - Optimisation
-st.markdown("## **Phase 3 : Optimisation du Portefeuille**")
+# Phase 3 - Asset Selection
+st.markdown("## **Phase 3: Asset Filtering for the Portfolio**")
 st.markdown(
     """
-    - Le problème d’optimisation est formulé pour **minimiser le risque** (volatilité du portefeuille),
-      sous plusieurs contraintes :
-        - Poids total des actifs = 100%
-        - Rendement attendu ≥ rendement cible (converti en mensuel)
-        - Poids de chaque actif ≤ limite imposée (ex. 25%)
-    - Nous utilisons `cvxpy` pour résoudre ce problème d'optimisation quadratique.
-    - À l’issue de l’optimisation, seuls les titres avec un poids strictement positif sont retenus dans le portefeuille.
+    - Only stocks with a **cumulative return of 10% or more** during the analysis period are selected.
+    - The **average correlation** of each stock with the others is computed.
+    - Stocks with an average correlation above **0.35** are excluded to promote diversification and avoid contagion.
     """
 )
 
-# Phase 4 - Résultats
-st.markdown("## **Phase 4 : Résultats Affichés**")
+# Phase 4 - Optimization
+st.markdown("## **Phase 4: Portfolio Optimization**")
 st.markdown(
     """
-    - 📈 **Rendement annuel attendu** du portefeuille
-    - 📉 **Risque (volatilité annualisée)** minimal obtenu
-    - 📊 **Tableau du portefeuille optimal** avec les titres sélectionnés, leurs poids et le montant à allouer
-    - ✅ L’utilisateur peut ajuster dynamiquement le capital, le rendement cible, le poids maximal ou la corrélation autorisée
+    - The portfolio is optimized to **minimize risk (volatility)** under the following constraints:
+        - The sum of asset weights must equal 100%
+        - The expected return must be ≥ **10% annually**
+        - The weight of each asset must not exceed **25%** to avoid concentration risk
+    - The optimization problem is solved using the `cvxpy` quadratic programming solver.
     """
 )
 
+# Phase 5 - Results
+st.markdown("## **Phase 5: Displayed Results**")
+st.markdown(
+    """
+    - 📈 **Expected annual return** of the optimized portfolio
+    - 📉 **Minimum risk (annualized volatility)** achieved through optimization
+    - 📊 **Detailed portfolio table** showing selected stocks, assigned weights, and investment amounts
+    - ✅ Interactive interface to adjust: capital, target return, max weight, and correlation threshold
+    """
+)
+
+# Footer
 st.markdown(
     """
     <hr>
     <p style="text-align:center; font-size:14px; color:gray;">
-        Application développée dans le cadre d'un projet d'un entretien.
+        Application developed as part of an applied research project on asset management for the BRVM.
     </p>
     """,
     unsafe_allow_html=True,

@@ -7,7 +7,7 @@ from datetime import datetime
 
 
 # --- Chargement des données ---
-df = pd.read_csv("Action.csv")
+df = pd.read_csv("streamlit_app/Action.csv")
 
 # Conversion de la colonne 'date' en datetime et mise en index
 df['date'] = pd.to_datetime(df['date'], dayfirst=True)

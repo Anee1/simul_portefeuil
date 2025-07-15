@@ -1,12 +1,10 @@
-import streamlit as st
-from pathlib import Path
-from PIL import Image
-
 # Interface utilisateur avec Streamlit
+import streamlit as st
+
 st.set_page_config(
     layout="wide",
-    page_title=" Data Analyst sur Film",
-    page_icon="🎬"  # Emoji Unicode directement
+    page_title="Portefeuille Optimal BRVM",
+    page_icon="💼"
 )
 
 # Conteneur pour aligner les éléments horizontalement
@@ -15,8 +13,8 @@ col1, col2, col3 = st.columns([1, 4, 1])
 # Colonne gauche : Image
 with col1:
     st.image(
-        "https://media.licdn.com/dms/image/v2/D4E03AQF7cVN_iger2w/profile-displayphoto-shrink_800_800/B4EZdURvE.HsAc-/0/1749465625806?e=1755734400&v=beta&t=4FXq1wVFGgbqDEOVVw-MHUZt9wkZWEx0kndiMZQqMwo",  # Remplacez par le chemin de votre image
-        width=80,     # Ajustez la taille si nécessaire
+        "https://media.licdn.com/dms/image/v2/D4E03AQF7cVN_iger2w/profile-displayphoto-shrink_800_800/B4EZdURvE.HsAc-/0/1749465625806?e=1755734400&v=beta&t=4FXq1wVFGgbqDEOVVw-MHUZt9wkZWEx0kndiMZQqMwo",
+        width=80,
         use_container_width=False,
     )
 
@@ -24,7 +22,7 @@ with col1:
 with col2:
     st.markdown(
         """
-        <h1 style='text-align: center; margin-bottom: 0;'>Exploration des Données MovieLens</h1>
+        <h1 style='text-align: center; margin-bottom: 0;'>Construction d'un Portefeuille Optimal sur la BRVM</h1>
         """,
         unsafe_allow_html=True,
     )
@@ -45,52 +43,81 @@ with col3:
 st.write(" ")
 st.write(" ")
 
-
-st.title("Presentation du projet")
-st.markdown(" Ce projet a pour objectif de concevoir une architecture API en Python, robuste et modulaire, " \
-"dédiée à la gestion, à l’analyse et à la visualisation des données MovieLens." \
-" Il s’appuie sur une stack technologique moderne comprenant FastAPI pour la création de l’API, " \
-"SQLAlchemy pour la gestion de la base de données SQLite, Pydantic pour la validation des données," \
-" ainsi que des bibliothèques d’analyse et de visualisation telles que Pandas, NumPy et Plotly. " \
-"L’ensemble vise à offrir une interface performante et flexible, facilitant l’exploitation des données MovieLens.")
-
-st.write(" ")
-st.write(" ")
-# Titre
-st.markdown("# **Phase 1 : Conception de l’architecture et développement de l’API en Python**")
-# Afficher l'image séparément
-
-
-st.image("https://github.com/Anee1/Analyse_Films/blob/main/App_streamlit/architecture.png?raw=true", use_container_width=True)
+# Section de présentation du projet
+st.title("Présentation du projet")
 
 st.markdown(
-        """
-        <a href="https://github.com/Anee1/Moovie_Backend" target="_blank">
-            <button style="background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-size: 16px;">
-                📦 Cliquer pour voir le Code de la Phase 1
-            </button>
-        </a>
-        """,
-        unsafe_allow_html=True
-    )
+    """
+    Ce projet vise à construire un **portefeuille optimal d'actions cotées sur la BRVM**, basé sur une approche quantitative
+    et des contraintes de performance et de diversification.
+
+    L’objectif est de :
+    - Maximiser la diversification
+    - Garantir un rendement cible annuel
+    - Minimiser le risque (volatilité) du portefeuille
+    - Contrôler la corrélation entre les titres sélectionnés
+    - Respecter un poids maximal par actif
+
+    Nous utilisons les bibliothèques **Pandas, NumPy, Plotly** pour l'analyse de données, et **cvxpy** pour la modélisation et
+    la résolution du problème d'optimisation quadratique sous contraintes.
+    """
+)
 
 st.write(" ")
 st.write(" ")
-st.write(" ")
 
+# Phase 1 - Collecte et Préparation
+st.markdown("## **Phase 1 : Collecte et Préparation des Données**")
+st.markdown(
+    """
+    - Les données de cours sont collectées à partir des historiques des actions BRVM.
+    - Les colonnes avec trop de valeurs manquantes sont supprimées.
+    - Les données sont remplies (`forward fill`, `backward fill`) et converties en pourcentages de rendement mensuel.
+    - La période d’analyse porte sur **les données depuis juillet 2024 jusqu’à aujourd’hui**.
+    """
+)
 
-# Titre
-st.markdown("# **Phase 2 : Analyse exploratoire et visualisation statistique**")
-# Afficher l'image séparément
-st.image("https://github.com/Anee1/Analyse_Films/blob/main/App_streamlit/architecturephase.png?raw=true", use_container_width=True)
+# Phase 2 - Filtrage
+st.markdown("## **Phase 2 : Filtrage des Actifs**")
+st.markdown(
+    """
+    - Seules les actions dont le **rendement cumulé** sur la période est supérieur à **10%** sont retenues.
+    - Ensuite, on calcule la **corrélation moyenne** de chaque actif avec les autres.
+    - Les actions dont la corrélation moyenne dépasse un seuil (ex. 0.35) sont exclues.
+    """
+)
+
+# Phase 3 - Optimisation
+st.markdown("## **Phase 3 : Optimisation du Portefeuille**")
+st.markdown(
+    """
+    - Le problème d’optimisation est formulé pour **minimiser le risque** (volatilité du portefeuille),
+      sous plusieurs contraintes :
+        - Poids total des actifs = 100%
+        - Rendement attendu ≥ rendement cible (converti en mensuel)
+        - Poids de chaque actif ≤ limite imposée (ex. 25%)
+    - Nous utilisons `cvxpy` pour résoudre ce problème d'optimisation quadratique.
+    - À l’issue de l’optimisation, seuls les titres avec un poids strictement positif sont retenus dans le portefeuille.
+    """
+)
+
+# Phase 4 - Résultats
+st.markdown("## **Phase 4 : Résultats Affichés**")
+st.markdown(
+    """
+    - 📈 **Rendement annuel attendu** du portefeuille
+    - 📉 **Risque (volatilité annualisée)** minimal obtenu
+    - 📊 **Tableau du portefeuille optimal** avec les titres sélectionnés, leurs poids et le montant à allouer
+    - ✅ L’utilisateur peut ajuster dynamiquement le capital, le rendement cible, le poids maximal ou la corrélation autorisée
+    """
+)
 
 st.markdown(
-        """
-        <a href="https://github.com/Anee1/Analyse_Films" target="_blank">
-            <button style="background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-size: 16px;">
-                📊 Cliquer pour voir le Code de la Phase 2
-            </button>
-        </a>
-        """,
-        unsafe_allow_html=True
-    )
+    """
+    <hr>
+    <p style="text-align:center; font-size:14px; color:gray;">
+        Application développée dans le cadre d'un projet d'un entretien.
+    </p>
+    """,
+    unsafe_allow_html=True,
+)

@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import numpy as np
-
 import cvxpy as cp
 from datetime import datetime
 

@@ -106,6 +106,8 @@ st.markdown(
         - The expected return must be ≥ **10% annually**
         - The weight of each asset must not exceed **25%** to avoid concentration risk
     - The optimization problem is solved using the `cvxpy` quadratic programming solver.
+    -**Monte Carlo simulation** to estimate the probability of achieving the target return.
+
     """
 )
 

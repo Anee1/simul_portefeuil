@@ -4,10 +4,11 @@ import plotly.express as px
 import numpy as np
 import cvxpy as cp
 from datetime import datetime
-
+import plotly.graph_objects as go
 
 # --- Load data ---
 df = pd.read_csv("streamlit_app/Action.csv")
+#df = pd.read_csv("Action.csv")
 
 # Convert 'date' column to datetime and set as index
 df['date'] = pd.to_datetime(df['date'], dayfirst=True)
@@ -91,7 +92,7 @@ def calcul_return_period(price_series, freq=252):
 
 
 
-def portfolio_optimization(df, capital, target_return=0.10, max_weight=0.25, max_correlation=0.8):
+def portfolio_optimization(df, capital, target_return=0.10, max_weight=0.25, max_correlation=0.35):
     # 1. Filter period July 2024 to today
     df = df[(df.index >= pd.Timestamp('2024-07-01')) & (df.index <= pd.Timestamp(datetime.now().date()))]
     df = df.ffill().bfill()
@@ -177,10 +178,42 @@ def portfolio_optimization(df, capital, target_return=0.10, max_weight=0.25, max
         "Invested Amount (FCFA)": (portfolio * capital).round(0).astype(int)
     }).set_index("Ticker")
     st.dataframe(allocation)
+    return {
+        "portfolio": portfolio,
+        "annual_return": annual_return,
+        "annual_risk": annual_risk,
+        "capital": capital
+    }
 
 
+#''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+def simulate_portfolio_monte_carlo(S0, mu, sigma, T=1, steps=252, n_sim=1000, target_return=0.10):
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    dt = T / steps
+    np.random.seed(42)  # reproductibilité
+
+    # Mouvement brownien
+    W = np.random.normal(0, np.sqrt(dt), size=(steps, n_sim))
+    W = np.cumsum(W, axis=0)
+
+    time = np.linspace(0, T, steps).reshape(-1, 1)
+    S_t = S0 * np.exp((mu - 0.5 * sigma**2) * time + sigma * W)
+
+    # Proba d’atteindre le seuil de 10%
+    final_values = S_t[-1]
+    prob_above_target = np.mean(final_values >= S0 * (1 + target_return))
+
+    return S_t, prob_above_target
 
 
+#''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+
+   
+
+#''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 # --- Streamlit Interface ---
 st.title("📊 Stock Return & Volatility Analysis (Jan-Jun 2025)")
@@ -236,23 +269,107 @@ with col1:
 
 with col2:
     st.plotly_chart(fig_return, use_container_width=True)
-
+#''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 st.divider()
+risk_free_rate = 0.03  # taux sans risque annuel 
+st.title('Analyse de Tritre')
 
 Ticker = st.selectbox("Select a stock", df.columns)
 data = df[Ticker]
 returns = data.pct_change().fillna(0)
 
 fig = px.line(returns, title='Return Evolution')
-st.plotly_chart(fig)
+#st.plotly_chart(fig)
 
+fig_price = px.line(data, title=f"Évolution du prix de {Ticker}", labels={"value": "Prix", "index": "Date"})
+#st.plotly_chart(fig_price)
 
+col1, col2 = st.columns([1, 1])
+
+with col1:
+    st.plotly_chart(fig_price)
+    # st.plotly_chart(fig_cv, use_container_width=True)
+
+with col2:
+    st.plotly_chart(fig)
+
+# Calculs sur 1 an
+monthly_returns = data.resample("M").last().pct_change().dropna()
+if len(monthly_returns) > 12:
+    monthly_returns = monthly_returns[-12:]
+
+mean_return = monthly_returns.mean()
+volatility = monthly_returns.std()
+annual_return = (1 + mean_return)**12 - 1
+annual_volatility = volatility * np.sqrt(12)
+sharpe_ratio = (annual_return - risk_free_rate) / annual_volatility if annual_volatility != 0 else np.nan
+
+# Affichage des métriques
+st.subheader("📌 Statistiques sur 1 an")
+col1, col2, col3 = st.columns(3)
+col1.metric("Rendement annuel (%)", f"{annual_return * 100:.2f}")
+col2.metric("Volatilité annuelle (%)", f"{annual_volatility * 100:.2f}")
+col3.metric("Ratio de Sharpe", f"{sharpe_ratio:.2f}")
+
+st.divider()
 st.title("Portfolio Optimization")
 
 capital = st.number_input("Available Capital (FCFA)", value=10_000_000)
-target_return = st.slider("Annual Target Return (%)", min_value=0.0, max_value=100.0, value=10.0, step=0.5) / 100
+target_return = st.slider("Annual Target Return (%)", min_value=0.0, max_value=100.0, value=10.0, step=0.05) / 100
 # max_weight = st.slider("Max weight per stock (%)", min_value=5, max_value=100, value=20, step=5) / 100
 # max_correlation = st.slider("Max allowed correlation", min_value=0.0, max_value=1.0, value=0.35, step=0.05)
 
 if st.button("Run Optimization"):
-    portfolio_optimization(df, capital, target_return, max_weight=0.20, max_correlation=0.35)
+    results = portfolio_optimization(df, capital, target_return, max_weight=0.20, max_correlation=0.35)
+
+
+    if results:
+        S0 = results["capital"]
+        mu = results["annual_return"]
+        sigma = results["annual_risk"]
+
+        # Simulation
+        paths, prob = simulate_portfolio_monte_carlo(S0, mu, sigma)
+
+        st.subheader("🔁 Monte Carlo Simulation")
+
+        # Préparation du graphique Plotly
+        fig = go.Figure()
+
+        # On trace les 100 premières trajectoires (pour lisibilité)
+        for i in range(min(100, paths.shape[1])):
+            fig.add_trace(go.Scatter(
+                y=paths[:, i],
+                mode='lines',
+                line=dict(color='skyblue', width=1),
+                opacity=0.3,
+                showlegend=False
+            ))
+
+        # Ligne cible +10%
+        fig.add_trace(go.Scatter(
+            x=list(range(paths.shape[0])),
+            y=[S0 * 1.10] * paths.shape[0],
+            mode='lines',
+            line=dict(color='red', dash='dash'),
+            name='Target +10%'
+        ))
+
+        fig.update_layout(
+            title="Simulated Portfolio Value Trajectories (GBM)",
+            xaxis_title="Days",
+            yaxis_title="Portfolio Value (FCFA)",
+            template="plotly_white",
+            height=500,
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+        st.metric(f"📊 Probabilité d’atteindre au moins {target_return*100}% de rendement", f"{prob * 100:.2f}%")
+
+
+
+
+ #results = portfolio_optimization(df, capital = 10000000, target_return=0.10, max_weight=0.25, max_correlation=0.35)
+
+
